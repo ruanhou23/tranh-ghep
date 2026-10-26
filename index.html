@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Mosaic Studio - Trực Quan Hóa Ghép Ảnh</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-card: #1f2937;
+      --border: #374151;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #06b6d4;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(17, 24, 39, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      font-weight: 500;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      flex: 1;
+      height: calc(100vh - 69px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+    }
+
+    /* Sidebar Controls */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dropzone-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .dropzone-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .dropzone-text strong {
+      color: var(--text);
+    }
+
+    .preview-box {
+      margin-top: 10px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0,0,0,0.3);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .preview-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+
+    .preview-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .btn-quick {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-quick:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text-muted);
+    }
+
+    .tile-counter {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    .tile-grid-preview {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 6px 0;
+      scrollbar-width: thin;
+    }
+
+    .tile-grid-preview img {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    /* Sliders & Controls */
+    .control-group {
+      margin-bottom: 14px;
+    }
+
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .control-val {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+      height: 6px;
+      background: #374151;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    select {
+      width: 100%;
+      background: #111827;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    /* Action Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #818cf8);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* Workspace / Preview Canvas Area */
+    .workspace {
+      display: flex;
+      flex-direction: column;
+      background: #080c14;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .toolbar {
+      padding: 12px 24px;
+      background: rgba(17, 24, 39, 0.6);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+
+    .stat-item strong {
+      color: var(--text);
+    }
+
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: auto;
+      padding: 24px;
+      user-select: none;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      max-width: 100%;
+      max-height: 100%;
+      background: #000;
+    }
+
+    #mosaicCanvas {
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 220px);
+      object-fit: contain;
+    }
+
+    /* Split comparison view */
+    .split-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: none;
+    }
+
+    .split-original {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 100%;
+      overflow: hidden;
+      border-right: 2px solid white;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    }
+
+    .split-original img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: auto;
+      object-fit: cover;
+    }
+
+    .split-slider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #fff;
+      cursor: ew-resize;
+      pointer-events: all;
+    }
+
+    .split-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111;
+      font-size: 14px;
+    }
+
+    /* Progress Overlay */
+    .progress-strip {
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width 0.1s linear;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    .zoom-ctrls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 6px;
+    }
+
+    .zoom-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .zoom-btn:hover {
+      background: rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+      </div>
+      <div>
+        <h1>Photo Mosaic Studio</h1>
+      </div>
+      <span class="badge">Realtime Visual Generator</span>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-secondary" id="btnDownload" disabled style="display: inline-flex; align-items: center; gap: 6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Tải ảnh Mosaic
+      </button>
+    </div>
+  </header>
+
+  <div class="progress-strip">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <!-- 1. Ảnh Đích -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>1. Ảnh Đích (Target)</span>
+          <span style="font-size: 10px; color: var(--accent);">BẮT BUỘC</span>
+        </div>
+
+        <div class="dropzone" id="targetDropzone">
+          <input type="file" id="targetFileInput" accept="image/*">
+          <div class="dropzone-icon">🖼️</div>
+          <div class="dropzone-text"><strong>Chọn ảnh</strong> hoặc kéo thả vào đây</div>
+        </div>
+
+        <div class="preview-box" id="targetPreviewBox">
+          <img class="preview-thumb" id="targetThumb" src="">
+          <div class="preview-meta">
+            <div id="targetFilename" style="color: var(--text); font-weight: 500;">-</div>
+            <div id="targetDims">0 x 0 px</div>
+          </div>
+        </div>
+
+        <button class="btn-quick" id="btnSampleTarget">
+          🎨 Dùng ảnh mẫu thử nghiệm (Hoàng hôn)
+        </button>
+        <button class="btn-quick" id="btnDoraemonTarget" style="border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.1);">
+          🐱 Dùng ảnh Doraemon làm ảnh đích
+        </button>
+      </div>
+
+      <!-- 2. Thư viện Tiles -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>2. Mảnh ghép (Tiles)</span>
+          <span class="badge" id="tileCountBadge">0 ảnh</span>
+        </div>
+
+        <div class="dropzone" id="tilesDropzone">
+          <input type="file" id="tilesFileInput" accept="image/*" multiple>
+          <div class="dropzone-icon">📁</div>
+          <div class="dropzone-text"><strong>Chọn nhiều ảnh</strong> làm mảnh ghép</div>
+        </div>
+
+        <div class="tile-grid-preview" id="tilesPreviewGrid"></div>
+
+        <button class="btn-quick" id="btnLoadDoraemonTiles" style="border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.15);">
+          🤖 Nạp 100 ảnh Doraemon (Vừa tải)
+        </button>
+
+        <button class="btn-quick" id="btnGenerateSampleTiles">
+          ✨ Tạo nhanh 100 ảnh mẫu (Sample Tiles)
+        </button>
+      </div>
+
+      <!-- 3. Cài đặt thuật toán -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>3. Tham số thuật toán</span>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Kích thước tile (Tile Size)</span>
+            <span class="control-val" id="valTileSize">24px</span>
+          </div>
+          <input type="range" id="rangeTileSize" min="10" max="60" value="24" step="2">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Độ chi tiết so khớp (Match Res)</span>
+            <span class="control-val" id="valMatchRes">2x2 (Chuẩn)</span>
+          </div>
+          <select id="selectMatchRes">
+            <option value="1">1x1 (Màu trung bình - Siêu nhanh)</option>
+            <option value="2" selected>2x2 (4 vùng màu - Cân bằng tốt)</option>
+            <option value="4">4x4 (16 vùng màu - Chi tiết cao)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Pha màu gốc (Color Overlay)</span>
+            <span class="control-val" id="valColorTint">15%</span>
+          </div>
+          <input type="range" id="rangeColorTint" min="0" max="60" value="15" step="5">
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+            0%: Thuần ảnh tile | 15-30%: Nổi rõ nét ảnh gốc
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Tránh lặp tile gần nhau</span>
+          </div>
+          <select id="selectRepeat">
+            <option value="allow" selected>Cho phép lặp tự do (Giống mosaic.py gốc)</option>
+            <option value="avoid">Hạn chế lặp lại kề nhau</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button class="btn-primary" id="btnStart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Bắt đầu tạo Mosaic
+      </button>
+
+      <button class="btn-secondary" id="btnCancel" style="display:none; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">
+        Dừng tạo
+      </button>
+
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+      <div class="toolbar">
+        <div class="stats-bar">
+          <div class="stat-item">Tiến độ: <strong id="statPercent">0%</strong></div>
+          <div class="stat-item">Mảnh ghép: <strong id="statTiles">0 / 0</strong></div>
+          <div class="stat-item">Tốc độ: <strong id="statSpeed">0 t/s</strong></div>
+          <div class="stat-item">Thời gian: <strong id="statTime">00:00</strong></div>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div class="zoom-ctrls">
+            <button class="zoom-btn" id="btnZoomOut">-</button>
+            <span id="zoomLevel" style="font-size: 0.75rem; min-width: 42px; text-align: center;">100%</span>
+            <button class="zoom-btn" id="btnZoomIn">+</button>
+            <button class="zoom-btn" id="btnZoomReset">Reset</button>
+          </div>
+
+          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; cursor: pointer; color: var(--text-muted);">
+            <input type="checkbox" id="chkSplitView" disabled> So sánh Trước/Sau
+          </label>
+        </div>
+      </div>
+
+      <div class="canvas-container" id="canvasContainer">
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="mosaicCanvas"></canvas>
+          <div class="split-container" id="splitContainer">
+            <div class="split-original" id="splitOriginal">
+              <img id="splitOriginalImg" src="">
+            </div>
+            <div class="split-slider" id="splitSlider">
+              <div class="split-handle">↔</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+          <div class="empty-state-icon">🧩</div>
+          <h3>Chưa có ảnh nào được xử lý</h3>
+          <p style="margin-top: 6px; font-size: 0.85rem;">Chọn ảnh đích và tải các ảnh tile ở thanh bên trái, hoặc bấm "Dùng ảnh mẫu" để trải nghiệm ngay!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State Management
+    let targetImage = null;
+    let targetImageSrc = null;
+    let tiles = []; // Array of { img, data, avgColor }
+    let isProcessing = false;
+    let shouldCancel = false;
+    let currentZoom = 1;
+
+    // Elements
+    const targetFileInput = document.getElementById('targetFileInput');
+    const targetThumb = document.getElementById('targetThumb');
+    const targetPreviewBox = document.getElementById('targetPreviewBox');
+    const targetFilename = document.getElementById('targetFilename');
+    const targetDims = document.getElementById('targetDims');
+    const btnSampleTarget = document.getElementById('btnSampleTarget');
+    const btnDoraemonTarget = document.getElementById('btnDoraemonTarget');
+
+    const tilesFileInput = document.getElementById('tilesFileInput');
+    const tileCountBadge = document.getElementById('tileCountBadge');
+    const tilesPreviewGrid = document.getElementById('tilesPreviewGrid');
+    const btnGenerateSampleTiles = document.getElementById('btnGenerateSampleTiles');
+    const btnLoadDoraemonTiles = document.getElementById('btnLoadDoraemonTiles');
+
+    const rangeTileSize = document.getElementById('rangeTileSize');
+    const valTileSize = document.getElementById('valTileSize');
+    const selectMatchRes = document.getElementById('selectMatchRes');
+    const rangeColorTint = document.getElementById('rangeColorTint');
+    const valColorTint = document.getElementById('valColorTint');
+    const selectRepeat = document.getElementById('selectRepeat');
+
+    const btnStart = document.getElementById('btnStart');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnDownload = document.getElementById('btnDownload');
+
+    const progressFill = document.getElementById('progressFill');
+    const statPercent = document.getElementById('statPercent');
+    const statTiles = document.getElementById('statTiles');
+    const statSpeed = document.getElementById('statSpeed');
+    const statTime = document.getElementById('statTime');
+
+    const mosaicCanvas = document.getElementById('mosaicCanvas');
+    const ctx = mosaicCanvas.getContext('2d');
+    const emptyState = document.getElementById('emptyState');
+    const canvasWrapper = document.getElementById('canvasWrapper');
+
+    const chkSplitView = document.getElementById('chkSplitView');
+    const splitContainer = document.getElementById('splitContainer');
+    const splitOriginal = document.getElementById('splitOriginal');
+    const splitOriginalImg = document.getElementById('splitOriginalImg');
+    const splitSlider = document.getElementById('splitSlider');
+
+    // UI Updates for inputs
+    rangeTileSize.addEventListener('input', (e) => {
+      valTileSize.textContent = e.target.value + 'px';
+    });
+
+    rangeColorTint.addEventListener('input', (e) => {
+      valColorTint.textContent = e.target.value + '%';
+    });
+
+    // 1. Target Image Handling
+    targetFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadTargetFile(file);
+    });
+
+    function loadTargetFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        loadTargetFromSrc(e.target.result, file.name);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function loadTargetFromSrc(src, name = 'Target Image') {
+      const img = new Image();
+      img.onload = () => {
+        targetImage = img;
+        targetImageSrc = src;
+        targetThumb.src = src;
+        targetPreviewBox.style.display = 'flex';
+        targetFilename.textContent = name;
+        targetDims.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+        splitOriginalImg.src = src;
+        updateStartButtonState();
+      };
+      img.src = src;
+    }
+
+    // Generate Beautiful Sample Target Image
+    btnSampleTarget.addEventListener('click', () => {
+      const c = document.createElement('canvas');
+      c.width = 640;
+      c.height = 480;
+      const tCtx = c.getContext('2d');
+
+      // Sky gradient
+      const skyGrad = tCtx.createLinearGradient(0, 0, 0, 300);
+      skyGrad.addColorStop(0, '#0f172a');
+      skyGrad.addColorStop(0.5, '#6366f1');
+      skyGrad.addColorStop(1, '#f59e0b');
+      tCtx.fillStyle = skyGrad;
+      tCtx.fillRect(0, 0, 640, 300);
+
+      // Sun
+      tCtx.fillStyle = '#fffbeb';
+      tCtx.beginPath();
+      tCtx.arc(320, 180, 50, 0, Math.PI * 2);
+      tCtx.fill();
+
+      // Mountains
+      tCtx.fillStyle = '#1e1b4b';
+      tCtx.beginPath();
+      tCtx.moveTo(0, 300);
+      tCtx.lineTo(160, 140);
+      tCtx.lineTo(340, 300);
+      tCtx.fill();
+
+      tCtx.fillStyle = '#312e81';
+      tCtx.beginPath();
+      tCtx.moveTo(240, 300);
+      tCtx.lineTo(440, 170);
+      tCtx.lineTo(640, 300);
+      tCtx.fill();
+
+      // Sea / Ground gradient
+      const seaGrad = tCtx.createLinearGradient(0, 300, 0, 480);
+      seaGrad.addColorStop(0, '#0891b2');
+      seaGrad.addColorStop(1, '#022c22');
+      tCtx.fillStyle = seaGrad;
+      tCtx.fillRect(0, 300, 640, 180);
+
+      loadTargetFromSrc(c.toDataURL('image/jpeg'), 'sunset_landscape_sample.jpg');
+    });
+
+    btnDoraemonTarget.addEventListener('click', () => {
+      loadTargetFromSrc('tiles_doraemon/doraemon_001.jpg', 'doraemon_target.jpg');
+    });
+
+    // 2. Tile Images Handling
+    tilesFileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      await processUploadedTiles(files);
+    });
+
+    async function processUploadedTiles(files) {
+      tileCountBadge.textContent = 'Đang đọc...';
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const dataUrl = await readFileAsDataURL(file);
+        const img = await loadImage(dataUrl);
+        addTile(img);
+      }
+      updateTilesUI();
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise((res) => {
+        const reader = new FileReader();
+        reader.onload = (e) => res(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadImage(src) {
+      return new Promise((res) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.src = src;
+      });
+    }
+
+    function addTile(img) {
+      tiles.push({ img });
+    }
+
+    function updateTilesUI() {
+      tileCountBadge.textContent = `${tiles.length} ảnh`;
+      tilesPreviewGrid.innerHTML = '';
+      const previewLimit = Math.min(tiles.length, 25);
+      for (let i = 0; i < previewLimit; i++) {
+        const thumb = document.createElement('img');
+        thumb.src = tiles[i].img.src;
+        tilesPreviewGrid.appendChild(thumb);
+      }
+      if (tiles.length > 25) {
+        const more = document.createElement('span');
+        more.style.fontSize = '11px';
+        more.style.color = 'var(--text-muted)';
+        more.style.alignSelf = 'center';
+        more.textContent = `+${tiles.length - 25}`;
+        tilesPreviewGrid.appendChild(more);
+      }
+      updateStartButtonState();
+    }
+
+    // Generate 100 colorful procedural sample tiles
+    btnGenerateSampleTiles.addEventListener('click', async () => {
+      btnGenerateSampleTiles.disabled = true;
+      btnGenerateSampleTiles.textContent = '⏳ Đang sinh 100 tiles...';
+
+      const sampleCount = 100;
+      tiles = [];
+
+      const palettes = [
+        ['#ef4444', '#f87171', '#b91c1c'], // Reds
+        ['#3b82f6', '#60a5fa', '#1d4ed8'], // Blues
+        ['#10b981', '#34d399', '#047857'], // Greens
+        ['#f59e0b', '#fbbf24', '#b45309'], // Yellow/Amber
+        ['#8b5cf6', '#a78bfa', '#6d28d9'], // Purples
+        ['#ec4899', '#f472b6', '#be185d'], // Pinks
+        ['#06b6d4', '#22d3ee', '#0e7490'], // Cyan
+        ['#f97316', '#fb923c', '#c2410c'], // Orange
+        ['#111827', '#4b5563', '#9ca3af'], // Grayscale
+        ['#ffffff', '#f3f4f6', '#e5e7eb'], // Whites
+      ];
+
+      for (let i = 0; i < sampleCount; i++) {
+        const tc = document.createElement('canvas');
+        tc.width = 48;
+        tc.height = 48;
+        const tCtx = tc.getContext('2d');
+
+        const pal = palettes[i % palettes.length];
+        const mode = i % 5;
+
+        if (mode === 0) {
+          // Solid / slight noise
+          tCtx.fillStyle = pal[0];
+          tCtx.fillRect(0, 0, 48, 48);
+        } else if (mode === 1) {
+          // Linear gradient
+          const g = tCtx.createLinearGradient(0, 0, 48, 48);
+          g.addColorStop(0, pal[0]);
+          g.addColorStop(1, pal[1] || pal[0]);
+          tCtx.fillStyle = g;
+          tCtx.fillRect(0, 0, 48, 48);
+        } else if (mode === 2) {
+          // Radial circle
+          tCtx.fillStyle = pal[2] || pal[0];
+          tCtx.fillRect(0, 0, 48, 48);
+          tCtx.fillStyle = pal[1] || pal[0];
+          tCtx.beginPath();
+          tCtx.arc(24, 24, 18, 0, Math.PI * 2);
+          tCtx.fill();
+        } else if (mode === 3) {
+          // Geometric split
+          tCtx.fillStyle = pal[0];
+          tCtx.fillRect(0, 0, 48, 48);
+          tCtx.fillStyle = pal[1];
+          tCtx.beginPath();
+          tCtx.moveTo(0, 48);
+          tCtx.lineTo(48, 0);
+          tCtx.lineTo(48, 48);
+          tCtx.fill();
+        } else {
+          // Rings
+          tCtx.fillStyle = pal[1];
+          tCtx.fillRect(0, 0, 48, 48);
+          tCtx.strokeStyle = pal[0];
+          tCtx.lineWidth = 4;
+          tCtx.strokeRect(6, 6, 36, 36);
+        }
+
+        const dataUrl = tc.toDataURL('image/png');
+        const img = await loadImage(dataUrl);
+        addTile(img);
+      }
+
+      updateTilesUI();
+      btnGenerateSampleTiles.disabled = false;
+      btnGenerateSampleTiles.textContent = '✨ Tạo nhanh 100 ảnh mẫu (Sample Tiles)';
+    });
+
+    // Nạp trực tiếp 100 ảnh Doraemon từ thư mục tiles_doraemon
+    btnLoadDoraemonTiles.addEventListener('click', async () => {
+      btnLoadDoraemonTiles.disabled = true;
+      btnLoadDoraemonTiles.textContent = '⏳ Đang nạp 100 ảnh...';
+      tiles = [];
+      let loaded = 0;
+
+      for (let i = 1; i <= 100; i++) {
+        const num = i.toString().padStart(3, '0');
+        const url = `tiles_doraemon/doraemon_${num}.jpg`;
+        try {
+          const img = await loadImage(url);
+          addTile(img);
+          loaded++;
+          if (loaded % 10 === 0 || loaded === 100) {
+            tileCountBadge.textContent = `${loaded} ảnh`;
+          }
+        } catch (e) {
+          // Nếu chạy chế độ file:// trực tiếp bị CORS, báo người dùng
+        }
+      }
+
+      if (loaded === 0) {
+        alert('Không tải được tự động (thường do mở trực tiếp bằng file:// khiến trình duyệt chặn). Vui lòng dùng nút "Chọn nhiều ảnh" và chọn toàn bộ ảnh trong thư mục tiles_doraemon, hoặc chạy qua python3 server.py!');
+      }
+
+      updateTilesUI();
+      btnLoadDoraemonTiles.disabled = false;
+      btnLoadDoraemonTiles.textContent = '🤖 Nạp 100 ảnh Doraemon (Vừa tải)';
+    });
+
+    function updateStartButtonState() {
+      btnStart.disabled = !(targetImage && tiles.length > 0);
+    }
+
+    // 3. Preprocessing Tiles for Match Resolution
+    function prepareTiles(matchRes) {
+      const tileCanvas = document.createElement('canvas');
+      tileCanvas.width = matchRes;
+      tileCanvas.height = matchRes;
+      const tCtx = tileCanvas.getContext('2d');
+
+      for (const tile of tiles) {
+        tCtx.clearRect(0, 0, matchRes, matchRes);
+        // Draw square cropped tile
+        const w = tile.img.naturalWidth || tile.img.width;
+        const h = tile.img.naturalHeight || tile.img.height;
+        const minDim = Math.min(w, h);
+        const sx = (w - minDim) / 2;
+        const sy = (h - minDim) / 2;
+
+        tCtx.drawImage(tile.img, sx, sy, minDim, minDim, 0, 0, matchRes, matchRes);
+        const imgData = tCtx.getImageData(0, 0, matchRes, matchRes).data;
+        tile.matchData = imgData; // RGBA values
+      }
+    }
+
+    // 4. Mosaic Generation Engine
+    btnStart.addEventListener('click', async () => {
+      if (isProcessing) return;
+      isProcessing = true;
+      shouldCancel = false;
+
+      btnStart.style.display = 'none';
+      btnCancel.style.display = 'block';
+      btnDownload.disabled = true;
+      chkSplitView.disabled = true;
+      chkSplitView.checked = false;
+      splitContainer.style.display = 'none';
+
+      emptyState.style.display = 'none';
+
+      const tileSize = parseInt(rangeTileSize.value);
+      const matchRes = parseInt(selectMatchRes.value);
+      const colorTint = parseInt(rangeColorTint.value) / 100;
+      const avoidRepeat = selectRepeat.value === 'avoid';
+
+      // Setup Target Canvas
+      const width = targetImage.naturalWidth;
+      const height = targetImage.naturalHeight;
+
+      const numCols = Math.floor(width / tileSize);
+      const numRows = Math.floor(height / tileSize);
+      const totalTiles = numCols * numRows;
+
+      mosaicCanvas.width = numCols * tileSize;
+      mosaicCanvas.height = numRows * tileSize;
+
+      // Draw initial black or blurred background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, mosaicCanvas.width, mosaicCanvas.height);
+
+      // Pre-extract target cells
+      const targetCanvas = document.createElement('canvas');
+      targetCanvas.width = mosaicCanvas.width;
+      targetCanvas.height = mosaicCanvas.height;
+      const tgCtx = targetCanvas.getContext('2d');
+      tgCtx.drawImage(targetImage, 0, 0, mosaicCanvas.width, mosaicCanvas.height);
+
+      // Prepare tiles with match resolution
+      prepareTiles(matchRes);
+
+      // Small match canvas for cell extraction
+      const matchCanvas = document.createElement('canvas');
+      matchCanvas.width = matchRes;
+      matchCanvas.height = matchRes;
+      const mCtx = matchCanvas.getContext('2d');
+
+      let completedTiles = 0;
+      const startTime = performance.now();
+      let lastTileIndex = -1;
+
+      // Row-by-row asynchronous processing
+      for (let r = 0; r < numRows; r++) {
+        if (shouldCancel) break;
+
+        for (let c = 0; c < numCols; c++) {
+          if (shouldCancel) break;
+
+          const x = c * tileSize;
+          const y = r * tileSize;
+
+          // Extract match data for this cell
+          mCtx.clearRect(0, 0, matchRes, matchRes);
+          mCtx.drawImage(targetCanvas, x, y, tileSize, tileSize, 0, 0, matchRes, matchRes);
+          const cellData = mCtx.getImageData(0, 0, matchRes, matchRes).data;
+
+          // Find best fitting tile
+          let bestFitIndex = 0;
+          let minDiff = Infinity;
+
+          for (let i = 0; i < tiles.length; i++) {
+            if (avoidRepeat && i === lastTileIndex && tiles.length > 2) continue;
+
+            const tData = tiles[i].matchData;
+            let diff = 0;
+
+            // Euclidean distance across all pixel RGBs
+            for (let p = 0; p < tData.length; p += 4) {
+              const dr = cellData[p] - tData[p];
+              const dg = cellData[p + 1] - tData[p + 1];
+              const db = cellData[p + 2] - tData[p + 2];
+              diff += dr * dr + dg * dg + db * db;
+              if (diff >= minDiff) break;
+            }
+
+            if (diff < minDiff) {
+              minDiff = diff;
+              bestFitIndex = i;
+            }
+          }
+
+          lastTileIndex = bestFitIndex;
+          const bestTile = tiles[bestFitIndex];
+
+          // Draw tile onto mosaicCanvas
+          const tw = bestTile.img.naturalWidth || bestTile.img.width;
+          const th = bestTile.img.naturalHeight || bestTile.img.height;
+          const tMin = Math.min(tw, th);
+          const sx = (tw - tMin) / 2;
+          const sy = (th - tMin) / 2;
+
+          ctx.drawImage(bestTile.img, sx, sy, tMin, tMin, x, y, tileSize, tileSize);
+
+          // Apply color tint overlay if requested
+          if (colorTint > 0) {
+            ctx.save();
+            ctx.globalAlpha = colorTint;
+            ctx.drawImage(targetCanvas, x, y, tileSize, tileSize, x, y, tileSize, tileSize);
+            ctx.restore();
+          }
+
+          completedTiles++;
+        }
+
+        // Update progress UI per row for smooth 60fps rendering
+        const now = performance.now();
+        const elapsedSec = (now - startTime) / 1000;
+        const progress = (completedTiles / totalTiles) * 100;
+        const speed = Math.round(completedTiles / Math.max(elapsedSec, 0.001));
+
+        progressFill.style.width = `${progress}%`;
+        statPercent.textContent = `${progress.toFixed(1)}%`;
+        statTiles.textContent = `${completedTiles} / ${totalTiles}`;
+        statSpeed.textContent = `${speed} t/s`;
+
+        const min = Math.floor(elapsedSec / 60).toString().padStart(2, '0');
+        const sec = Math.floor(elapsedSec % 60).toString().padStart(2, '0');
+        statTime.textContent = `${min}:${sec}`;
+
+        // Give breath to UI loop
+        await new Promise((res) => setTimeout(res, 0));
+      }
+
+      // Finish
+      isProcessing = false;
+      btnStart.style.display = 'flex';
+      btnCancel.style.display = 'none';
+      btnDownload.disabled = false;
+      chkSplitView.disabled = false;
+
+      if (!shouldCancel) {
+        progressFill.style.width = '100%';
+        statPercent.textContent = '100%';
+      }
+    });
+
+    btnCancel.addEventListener('click', () => {
+      shouldCancel = true;
+    });
+
+    // 5. Download Result
+    btnDownload.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `mosaic_${Date.now()}.png`;
+      link.href = mosaicCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // 6. Split View Comparison Slider
+    chkSplitView.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        splitContainer.style.display = 'block';
+        updateSplit(0.5);
+      } else {
+        splitContainer.style.display = 'none';
+      }
+    });
+
+    function updateSplit(ratio) {
+      const w = canvasWrapper.clientWidth;
+      const splitX = Math.max(0, Math.min(w, ratio * w));
+      splitOriginal.style.width = `${splitX}px`;
+      splitSlider.style.left = `${splitX}px`;
+      splitOriginalImg.style.width = `${w}px`;
+    }
+
+    let isDraggingSplit = false;
+    splitSlider.addEventListener('mousedown', () => { isDraggingSplit = true; });
+    window.addEventListener('mouseup', () => { isDraggingSplit = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDraggingSplit) return;
+      const rect = canvasWrapper.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      updateSplit(ratio);
+    });
+
+    // 7. Zoom Controls
+    const btnZoomIn = document.getElementById('btnZoomIn');
+    const btnZoomOut = document.getElementById('btnZoomOut');
+    const btnZoomReset = document.getElementById('btnZoomReset');
+    const zoomLevel = document.getElementById('zoomLevel');
+
+    btnZoomIn.addEventListener('click', () => {
+      currentZoom = Math.min(4, currentZoom + 0.25);
+      applyZoom();
+    });
+
+    btnZoomOut.addEventListener('click', () => {
+      currentZoom = Math.max(0.25, currentZoom - 0.25);
+      applyZoom();
+    });
+
+    btnZoomReset.addEventListener('click', () => {
+      currentZoom = 1;
+      applyZoom();
+    });
+
+    function applyZoom() {
+      canvasWrapper.style.transform = `scale(${currentZoom})`;
+      zoomLevel.textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+  </script>
+</body>
+</html>
